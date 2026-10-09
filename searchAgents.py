@@ -295,15 +295,18 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        
+        if self.startingPosition in self.corners:
+            visited = frozenset([self.startingPosition])
+        else:
+            visited = frozenset()
 
-    def isGoalState(self, state: Any):
-        """
-        Returns whether this search state is a goal state of the problem.
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, visited)
+    
+
+    def isGoalState(self, state):
+        position, visited_corners = state
+        return len(visited_corners) == len(self.corners)
 
     def getSuccessors(self, state: Any):
         """
@@ -317,17 +320,33 @@ class CornersProblem(search.SearchProblem):
         """
 
         successors = []
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+        current_position, visited_corners = state
+        x, y = current_position
 
-            "*** YOUR CODE HERE ***"
+        for action in [
+            Directions.NORTH,
+            Directions.SOUTH,
+            Directions.EAST,
+            Directions.WEST
+        ]:
+            dx, dy = Actions.directionToVector(action)
 
-        self._expanded += 1 # DO NOT CHANGE
+            nextx = int(x + dx)
+            nexty = int(y + dy)
+
+            if not self.walls[nextx][nexty]:
+                next_position = (nextx, nexty)
+
+                if next_position in self.corners:
+                    next_visited = visited_corners | frozenset([next_position])
+                else:
+                    next_visited = visited_corners
+
+                next_state = (next_position, next_visited)
+
+                successors.append((next_state, action, 1))
+
+        self._expanded += 1  # DO NOT CHANGE
         return successors
 
     def getCostOfActions(self, actions):
