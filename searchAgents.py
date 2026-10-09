@@ -472,9 +472,46 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
+
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    food = foodGrid.asList()
+
+    if not food:
+        return 0
+
+    # Manhattan distance from Pacman to the nearest food dot.
+    nearest_food = min(
+        abs(position[0] - x) + abs(position[1] - y)
+        for x, y in food
+    )
+
+    # Build a minimum spanning tree over the remaining food dots
+    # using Manhattan distance as a lower bound on maze distance.
+    remaining = set(food)
+    start = food[0]
+    remaining.remove(start)
+
+    connected = {start}
+    mst_cost = 0
+
+    while remaining:
+        best_distance = float("inf")
+        best_food = None
+
+        for x1, y1 in connected:
+            for x2, y2 in remaining:
+                distance = abs(x1 - x2) + abs(y1 - y2)
+
+                if distance < best_distance:
+                    best_distance = distance
+                    best_food = (x2, y2)
+
+        mst_cost += best_distance
+        connected.add(best_food)
+        remaining.remove(best_food)
+
+    return nearest_food + mst_cost
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
