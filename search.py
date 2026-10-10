@@ -1,10 +1,11 @@
+
 # search.py
 # ---------
-# Licensing Information:  You are free to use or extend these projects for
+# Licensing Information: You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -18,6 +19,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+
 
 class SearchProblem:
     """
@@ -35,7 +37,7 @@ class SearchProblem:
 
     def isGoalState(self, state):
         """
-          state: Search state
+        state: Search state
 
         Returns True if and only if the state is a valid goal state.
         """
@@ -43,7 +45,7 @@ class SearchProblem:
 
     def getSuccessors(self, state):
         """
-          state: Search state
+        state: Search state
 
         For a given state, this should return a list of triples, (successor,
         action, stepCost), where 'successor' is a successor to the current
@@ -54,7 +56,7 @@ class SearchProblem:
 
     def getCostOfActions(self, actions):
         """
-         actions: A list of actions to take
+        actions: A list of actions to take
 
         This method returns the total cost of a particular sequence of actions.
         The sequence must be composed of legal moves.
@@ -64,13 +66,14 @@ class SearchProblem:
 
 def tinyMazeSearch(problem):
     """
-    Returns a sequence of moves that solves tinyMaze.  For any other maze, the
+    Returns a sequence of moves that solves tinyMaze. For any other maze, the
     sequence of moves will be incorrect, so only use this for tinyMaze.
     """
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem: SearchProblem):
     """
@@ -108,10 +111,56 @@ def depthFirstSearch(problem: SearchProblem):
 
     return []
 
+
 def breadthFirstSearch(problem: SearchProblem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    """
+    Search the shallowest nodes in the search tree first.
+
+    BFS uses a FIFO queue to explore states level by level.
+    It finds a shortest path in terms of number of actions.
+    """
+
+    # Create a FIFO queue for the frontier.
+    fringe = util.Queue()
+
+    # Get the starting state.
+    start_state = problem.getStartState()
+
+    # Store each state together with the path used to reach it.
+    fringe.push((start_state, []))
+
+    # Keep track of discovered states to prevent revisiting them.
+    visited = set()
+    visited.add(start_state)
+
+    # Continue searching while there are states to explore.
+    while not fringe.isEmpty():
+
+        # Remove the oldest state from the queue.
+        state, actions = fringe.pop()
+
+        # Return the path when the goal is reached.
+        if problem.isGoalState(state):
+            return actions
+
+        # Explore all neighboring states.
+        for successor, action, step_cost in problem.getSuccessors(state):
+
+            # Only explore states that have not been discovered.
+            if successor not in visited:
+
+                # Mark the successor as discovered.
+                visited.add(successor)
+
+                # Create the path to the successor.
+                new_actions = actions + [action]
+
+                # Add the successor to the queue.
+                fringe.push((successor, new_actions))
+
+    # Return an empty path if no solution exists.
+    return []
+
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
@@ -141,12 +190,14 @@ def uniformCostSearch(problem: SearchProblem):
 
     return []
 
+
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
-    goal in the provided SearchProblem.  This heuristic is trivial.
+    goal in the provided SearchProblem. This heuristic is trivial.
     """
     return 0
+
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
