@@ -1,0 +1,244 @@
+
+# search.py
+# ---------
+# Licensing Information: You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
+#
+# Attribution Information: The Pacman AI projects were developed at UC Berkeley.
+# The core projects and autograders were primarily created by John DeNero
+# (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
+# Student side autograding was added by Brad Miller, Nick Hay, and
+# Pieter Abbeel (pabbeel@cs.berkeley.edu).
+
+
+"""
+In search.py, you will implement generic search algorithms which are called by
+Pacman agents (in searchAgents.py).
+"""
+
+import util
+
+
+class SearchProblem:
+    """
+    This class outlines the structure of a search problem, but doesn't implement
+    any of the methods (in object-oriented terminology: an abstract class).
+
+    You do not need to change anything in this class, ever.
+    """
+
+    def getStartState(self):
+        """
+        Returns the start state for the search problem.
+        """
+        util.raiseNotDefined()
+
+    def isGoalState(self, state):
+        """
+        state: Search state
+
+        Returns True if and only if the state is a valid goal state.
+        """
+        util.raiseNotDefined()
+
+    def getSuccessors(self, state):
+        """
+        state: Search state
+
+        For a given state, this should return a list of triples, (successor,
+        action, stepCost), where 'successor' is a successor to the current
+        state, 'action' is the action required to get there, and 'stepCost' is
+        the incremental cost of expanding to that successor.
+        """
+        util.raiseNotDefined()
+
+    def getCostOfActions(self, actions):
+        """
+        actions: A list of actions to take
+
+        This method returns the total cost of a particular sequence of actions.
+        The sequence must be composed of legal moves.
+        """
+        util.raiseNotDefined()
+
+
+def tinyMazeSearch(problem):
+    """
+    Returns a sequence of moves that solves tinyMaze. For any other maze, the
+    sequence of moves will be incorrect, so only use this for tinyMaze.
+    """
+    from game import Directions
+    s = Directions.SOUTH
+    w = Directions.WEST
+    return [s, s, w, s, w, w, s, w]
+
+
+def depthFirstSearch(problem: SearchProblem):
+    """
+    Search the deepest nodes in the search tree first.
+
+    Your search algorithm needs to return a list of actions that reaches the
+    goal. Make sure to implement a graph search algorithm.
+
+    To get started, you might want to try some of these simple commands to
+    understand the search problem that is being passed in:
+
+    print("Start:", problem.getStartState())
+    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    """
+    fringe = util.Stack()
+    fringe.push((problem.getStartState(), []))
+
+    visited = set()
+
+    while not fringe.isEmpty():
+        state, actions = fringe.pop()
+
+        if state in visited:
+            continue
+
+        visited.add(state)
+
+        if problem.isGoalState(state):
+            return actions
+
+        for successor, action, step_cost in problem.getSuccessors(state):
+            if successor not in visited:
+                fringe.push((successor, actions + [action]))
+
+    return []
+
+
+def breadthFirstSearch(problem: SearchProblem):
+    """
+    Search the shallowest nodes in the search tree first.
+
+    BFS uses a FIFO queue to explore states level by level.
+    It finds a shortest path in terms of number of actions.
+    """
+
+    # Create a FIFO queue for the frontier.
+    fringe = util.Queue()
+
+    # Get the starting state.
+    start_state = problem.getStartState()
+
+    # Store each state together with the path used to reach it.
+    fringe.push((start_state, []))
+
+    # Keep track of discovered states to prevent revisiting them.
+    visited = set()
+    visited.add(start_state)
+
+    # Continue searching while there are states to explore.
+    while not fringe.isEmpty():
+
+        # Remove the oldest state from the queue.
+        state, actions = fringe.pop()
+
+        # Return the path when the goal is reached.
+        if problem.isGoalState(state):
+            return actions
+
+        # Explore all neighboring states.
+        for successor, action, step_cost in problem.getSuccessors(state):
+
+            # Only explore states that have not been discovered.
+            if successor not in visited:
+
+                # Mark the successor as discovered.
+                visited.add(successor)
+
+                # Create the path to the successor.
+                new_actions = actions + [action]
+
+                # Add the successor to the queue.
+                fringe.push((successor, new_actions))
+
+    # Return an empty path if no solution exists.
+    return []
+
+
+def uniformCostSearch(problem: SearchProblem):
+    """Search the node of least total cost first."""
+    fringe = util.PriorityQueue()
+    start_state = problem.getStartState()
+
+    fringe.push((start_state, [], 0), 0)
+    best_cost = {}
+
+    while not fringe.isEmpty():
+        state, actions, cost = fringe.pop()
+
+        if state in best_cost and best_cost[state] <= cost:
+            continue
+
+        best_cost[state] = cost
+
+        if problem.isGoalState(state):
+            return actions
+
+        for successor, action, step_cost in problem.getSuccessors(state):
+            new_cost = cost + step_cost
+
+            if successor not in best_cost or new_cost < best_cost[successor]:
+                new_actions = actions + [action]
+                fringe.push((successor, new_actions, new_cost), new_cost)
+
+    return []
+
+
+def nullHeuristic(state, problem=None):
+    """
+    A heuristic function estimates the cost from the current state to the nearest
+    goal in the provided SearchProblem. This heuristic is trivial.
+    """
+    return 0
+
+
+def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
+    """Search the node that has the lowest combined cost and heuristic first."""
+    fringe = util.PriorityQueue()
+    start_state = problem.getStartState()
+
+    # Queue entries keep the path so far and its accumulated cost.
+    fringe.push((start_state, [], 0), heuristic(start_state, problem))
+    best_cost = {start_state: 0}
+    expanded_cost = {}
+
+    while not fringe.isEmpty():
+        state, actions, cost = fringe.pop()
+
+        # Ignore an entry if a cheaper route was queued after it.
+        if cost > best_cost[state]:
+            continue
+
+        # Avoid re-expanding a state at an equal or greater cost, but allow
+        # reopening it if an inconsistent heuristic reveals a cheaper route.
+        if state in expanded_cost and expanded_cost[state] <= cost:
+            continue
+        expanded_cost[state] = cost
+
+        # A* checks for a goal when removing it from the priority queue.
+        if problem.isGoalState(state):
+            return actions
+
+        for successor, action, step_cost in problem.getSuccessors(state):
+            new_cost = cost + step_cost
+            if successor not in best_cost or new_cost < best_cost[successor]:
+                best_cost[successor] = new_cost
+                new_actions = actions + [action]
+                priority = new_cost + heuristic(successor, problem)
+                fringe.push((successor, new_actions, new_cost), priority)
+
+    return []
+
+
+# Abbreviations
+bfs = breadthFirstSearch
+dfs = depthFirstSearch
+astar = aStarSearch
+ucs = uniformCostSearch
